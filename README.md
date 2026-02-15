@@ -1,87 +1,38 @@
-# Coinbase Advanced Trade Spot Trading Bot
+# Coinbase Spot Trading Bot
 
-BTC-USD and ETH-USD spot trading bot using a take-profits → re-buy lower → build position strategy. Runs 24/7, restart-safe via SQLite, observable via SSH.
+Automated BTC-USD + ETH-USD spot trader. Sells into strength, re-buys lower, repeats.
 
-## Setup
+## Quick Start
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
+python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
+cp .env.example .env   # add your CDP API key + secret
 ```
-
-Create `.env` from the example:
 
 ```bash
-cp .env.example .env
+python -m src.main test-auth        # verify credentials
+python -m src.main dry-run --once   # simulate one loop
+python -m src.main run              # go live
+python -m src.main watch            # live TUI dashboard
 ```
 
-Edit `.env` with your Coinbase Advanced Trade API credentials (CDP API key with trading permissions).
+## How It Works
 
-## Commands
-
-**Test authentication:**
-```bash
-python -m src.main test-auth
+```mermaid
+graph LR
+    A[Monitor Price] --> B{Price above anchor?}
+    B -->|+2/4/6/8%| C[Take Profit — sell portion]
+    C --> D[Place Re-buy Limit Order Below]
+    B -->|No| E{Re-buy filled?}
+    E -->|Yes| F[Update Anchor — new position]
+    F --> A
+    E -->|No| A
+    D --> A
 ```
 
-**Dry-run (no real orders, reads real market data):**
-```bash
-python -m src.main dry-run --once      # single loop
-python -m src.main dry-run             # continuous
-```
+Trend detection (EMA 12/26) adjusts behavior — sells less in uptrends, buys further below in downtrends.
 
-**Live trading:**
-```bash
-python -m src.main run --once          # single loop
-python -m src.main run                 # continuous 24/7
-python -m src.main run --products BTC-USD  # single product
-```
+## State
 
-**Status dashboard:**
-```bash
-python -m src.main status
-```
-
-## Monitoring
-
-```bash
-tail -f logs/bot.log
-python -m src.main status
-```
-
-## Strategy Overview
-
-- **Take-profit ladder:** Sells portions at +2%, +4%, +6%, +8% above anchor price
-- **Re-buy:** Places limit buy orders below anchor, scaled by ATR volatility
-- **Trend filter:** EMA(12)/EMA(26) crossover adjusts sell fractions and rebuy distance
-- **Guards:** 5-min cooldown, 20 trades/day cap, $15 minimum order size
-
-## Linux Deployment
-
-```bash
-# Run in background with nohup
-nohup python -m src.main run > /dev/null 2>&1 &
-
-# Or use systemd service
-# Or run in tmux/screen session
-```
-
-## File Structure
-
-```
-src/
-  main.py              CLI entry point
-  config.py            All tunables + env loading
-  logging_setup.py     Rotating file + console logging
-  coinbase/
-    auth.py            JWT generation (ES256)
-    client.py          API client with retry + dry-run
-  storage/
-    db.py              SQLite state persistence
-  bot/
-    strategy.py        TP ladder, re-buy, trend, ATR logic
-    runner.py          Main loop, reconciliation, execution
-data/                  SQLite database (gitignored)
-logs/                  Log files (gitignored)
-```
+All state lives in `data/bot.db` (SQLite). Kill and restart anytime — the bot reconciles on startup.
