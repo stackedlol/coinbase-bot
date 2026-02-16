@@ -19,8 +19,10 @@
 
 # Bull Shark Trading Bot
 
-![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)
-![Version](https://img.shields.io/badge/version-0.0.1-blue)
+![Python](https://img.shields.io/badge/Python-3.10+-0D1117?style=for-the-badge&logo=python&logoColor=00D4AA)
+![Version](https://img.shields.io/badge/v0.0.1-0D1117?style=for-the-badge&logo=semanticrelease&logoColor=00D4AA)
+![BTC](https://img.shields.io/badge/BTC-0D1117?style=for-the-badge&logo=bitcoin&logoColor=F7931A)
+![ETH](https://img.shields.io/badge/ETH-0D1117?style=for-the-badge&logo=ethereum&logoColor=627EEA)
 
 **Automated BTC-USD + ETH-USD spot trader.**
 Sells into strength. Re-buys lower. Repeats.
@@ -34,7 +36,7 @@ Sells into strength. Re-buys lower. Repeats.
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env   # add your CDP API key + secret
+# create .env with COINBASE_API_KEY and COINBASE_API_SECRET
 ```
 
 ```bash
